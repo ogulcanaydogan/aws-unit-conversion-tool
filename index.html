@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+        select, input, button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unit Converter</h1>
+    <div class="container">
+        <label for="unitType">Select Unit Type:</label>
+        <select id="unitType" onchange="populateUnits()">
+            <option value="length">Length</option>
+            <option value="temperature">Temperature</option>
+            <option value="area">Area</option>
+            <option value="volume">Volume</option>
+            <option value="weight">Weight</option>
+            <option value="time">Time</option>
+        </select>
+        <br>
+        <input type="number" id="inputValue" placeholder="Enter value" />
+        <select id="fromUnit"></select>
+        to
+        <select id="toUnit"></select>
+        <br>
+        <button onclick="convert()">Convert</button>
+        <h2 id="result"></h2>
+    </div>
+    
+    <div class="container">
+        <h3>Days Since a Date</h3>
+        <input type="date" id="dateInput" />
+        <button onclick="calculateDaysSince()">Calculate</button>
+        <h2 id="daysResult"></h2>
+    </div>
+
+    <script>
+        const units = {
+            length: { meter: 1, kilometer: 0.001, mile: 0.000621371, yard: 1.09361, foot: 3.28084 },
+            temperature: { celsius: 1, fahrenheit: 'convertF', kelvin: 'convertK' },
+            area: { square_meter: 1, square_kilometer: 0.000001, square_mile: 3.861e-7, square_yard: 1.19599 },
+            volume: { liter: 1, milliliter: 1000, cubic_meter: 0.001, gallon: 0.264172 },
+            weight: { kilogram: 1, gram: 1000, pound: 2.20462, ounce: 35.274 },
+            time: { second: 1, minute: 0.0166667, hour: 0.000277778, day: 1.15741e-5 }
+        };
+
+        function populateUnits() {
+            let unitType = document.getElementById("unitType").value;
+            let fromUnit = document.getElementById("fromUnit");
+            let toUnit = document.getElementById("toUnit");
+            fromUnit.innerHTML = '';
+            toUnit.innerHTML = '';
+            
+            for (let unit in units[unitType]) {
+                let option1 = new Option(unit, unit);
+                let option2 = new Option(unit, unit);
+                fromUnit.add(option1);
+                toUnit.add(option2);
+            }
+        }
+
+        function convert() {
+            let unitType = document.getElementById("unitType").value;
+            let inputValue = parseFloat(document.getElementById("inputValue").value);
+            let fromUnit = document.getElementById("fromUnit").value;
+            let toUnit = document.getElementById("toUnit").value;
+            let result = document.getElementById("result");
+
+            if (unitType === 'temperature') {
+                if (fromUnit === 'celsius' && toUnit === 'fahrenheit') {
+                    result.innerText = `${inputValue}°C = ${(inputValue * 9/5) + 32}°F`;
+                } else if (fromUnit === 'fahrenheit' && toUnit === 'celsius') {
+                    result.innerText = `${inputValue}°F = ${((inputValue - 32) * 5/9).toFixed(2)}°C`;
+                } else if (fromUnit === 'celsius' && toUnit === 'kelvin') {
+                    result.innerText = `${inputValue}°C = ${inputValue + 273.15}K`;
+                } else if (fromUnit === 'kelvin' && toUnit === 'celsius') {
+                    result.innerText = `${inputValue}K = ${(inputValue - 273.15).toFixed(2)}°C`;
+                } else {
+                    result.innerText = 'Invalid conversion';
+                }
+            } else {
+                let factorFrom = units[unitType][fromUnit];
+                let factorTo = units[unitType][toUnit];
+                let convertedValue = (inputValue / factorFrom) * factorTo;
+                result.innerText = `${inputValue} ${fromUnit} = ${convertedValue.toFixed(4)} ${toUnit}`;
+            }
+        }
+
+        function calculateDaysSince() {
+            let dateInput = document.getElementById("dateInput").value;
+            let result = document.getElementById("daysResult");
+            if (!dateInput) {
+                result.innerText = "Please select a date.";
+                return;
+            }
+            let inputDate = new Date(dateInput);
+            let today = new Date();
+            let timeDifference = today - inputDate;
+            let daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            result.innerText = `Days since ${dateInput}: ${daysDifference}`;
+        }
+
+        populateUnits();
+    </script>
+</body>
+</html>
