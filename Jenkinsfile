@@ -93,4 +93,16 @@ pipeline {
       }
       steps {
         withCredentials([aws(credentialsId: env.AWS_CREDENTIALS_ID,
-                             accessKeyVaria
+                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+          sh '''
+            set -euo pipefail
+            aws cloudfront create-invalidation \
+              --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+              --paths "/*"
+          '''
+        }
+      }
+    }
+  }
+}
