@@ -1,68 +1,83 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-        }
-        select, input, button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .conversion-rate {
-            font-size: 14px;
-            color: #666;
-        }
-    </style>
+    <title>AWS Unit Conversion Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <h1>Unit Converter</h1>
-    <div class="container">
-        <label for="unitType">Select Unit Type:</label>
-        <select id="unitType" onchange="populateUnits()">
-            <option value="length">Length</option>
-            <option value="temperature">Temperature</option>
-            <option value="area">Area</option>
-            <option value="volume">Volume</option>
-            <option value="weight">Weight</option>
-            <option value="time">Time</option>
-            <option value="timezone">Time Zone</option>
-        </select>
-        <br>
-        <input type="number" id="inputValue" placeholder="Enter value" />
-        <select id="fromUnit"></select>
-        to
-        <select id="toUnit"></select>
-        <br>
-        <button onclick="convert()">Convert</button>
-        <h2 id="result"></h2>
-        <p class="conversion-rate" id="conversionRate"></p>
-    </div>
-    
-    <div class="container">
-        <h3>Days Since a Date</h3>
-        <input type="date" id="dateInput" />
-        <button onclick="calculateDaysSince()">Calculate</button>
-        <h2 id="daysResult"></h2>
-        <p id="fullResult"></p>
-    </div>
+    <header>
+        <h1>AWS Unit Conversion Hub</h1>
+        <p>
+            Convert values, compare time zones, and track milestones with a polished experience. Choose a unit type, enter
+            your value, and receive instant results tailored to cloud practitioners.
+        </p>
+    </header>
+    <main>
+        <section class="card" aria-labelledby="converter-title">
+            <div>
+                <h2 id="converter-title">Universal Converter</h2>
+                <p class="helper-text">Switch between unit types to unlock the right set of measurements and quick reference rates.</p>
+            </div>
+            <div class="form-row">
+                <div style="flex:1 1 100%">
+                    <label for="unitType">Unit category</label>
+                    <select id="unitType" onchange="populateUnits()">
+                        <option value="length">Length</option>
+                        <option value="temperature">Temperature</option>
+                        <option value="area">Area</option>
+                        <option value="volume">Volume</option>
+                        <option value="weight">Weight</option>
+                        <option value="time">Time</option>
+                        <option value="timezone">Time Zone</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div style="flex:1 1 120px; min-width:160px;">
+                    <label for="inputValue">Value</label>
+                    <input type="number" id="inputValue" placeholder="Enter value" aria-describedby="conversionRate" />
+                </div>
+                <div style="flex:1 1 150px; min-width:150px;">
+                    <label for="fromUnit">From</label>
+                    <select id="fromUnit"></select>
+                </div>
+                <div style="flex:1 1 150px; min-width:150px;">
+                    <label for="toUnit">To</label>
+                    <select id="toUnit"></select>
+                </div>
+            </div>
+            <button type="button" onclick="convert()">Convert value</button>
+            <div class="result-display" aria-live="polite" id="result">Enter a value to begin your conversion.</div>
+            <p id="conversionRate"></p>
+        </section>
+
+        <section class="card" aria-labelledby="date-title">
+            <div>
+                <h2 id="date-title">Days Since Calculator</h2>
+                <p class="helper-text">Track project launches, billing cycles, or cloud migrations with precise breakdowns.</p>
+            </div>
+            <div class="form-row">
+                <div style="flex:1 1 220px; min-width:200px;">
+                    <label for="dateInput">Select a past date</label>
+                    <input type="date" id="dateInput" />
+                </div>
+            </div>
+            <button type="button" onclick="calculateDaysSince()">Calculate elapsed time</button>
+            <div class="result-display" aria-live="polite">
+                <div id="daysResult">Pick a meaningful date to see the days since.</div>
+                <div id="fullResult" class="helper-text"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        Crafted for AWS builders — ready for static hosting or your favorite edge network.
+    </footer>
 
     <script>
         const units = {
@@ -76,72 +91,118 @@
         };
 
         function populateUnits() {
-            let unitType = document.getElementById("unitType").value;
-            let fromUnit = document.getElementById("fromUnit");
-            let toUnit = document.getElementById("toUnit");
-            fromUnit.innerHTML = '';
-            toUnit.innerHTML = '';
-            
-            for (let unit in units[unitType]) {
-                let option1 = new Option(unit, unit);
-                let option2 = new Option(unit, unit);
+            const unitType = document.getElementById("unitType").value;
+            const fromUnit = document.getElementById("fromUnit");
+            const toUnit = document.getElementById("toUnit");
+            fromUnit.innerHTML = "";
+            toUnit.innerHTML = "";
+
+            Object.keys(units[unitType]).forEach((unit) => {
+                const option1 = new Option(formatUnitLabel(unit), unit);
+                const option2 = new Option(formatUnitLabel(unit), unit);
                 fromUnit.add(option1);
                 toUnit.add(option2);
-            }
+            });
+
+            document.getElementById("conversionRate").innerText = "";
+        }
+
+        function formatUnitLabel(label) {
+            return label
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (char) => char.toUpperCase());
         }
 
         function convert() {
-            let unitType = document.getElementById("unitType").value;
-            let inputValue = parseFloat(document.getElementById("inputValue").value);
-            let fromUnit = document.getElementById("fromUnit").value;
-            let toUnit = document.getElementById("toUnit").value;
-            let result = document.getElementById("result");
-            let conversionRate = document.getElementById("conversionRate");
+            const unitType = document.getElementById("unitType").value;
+            const valueInput = document.getElementById("inputValue").value;
+            const inputValue = parseFloat(valueInput);
+            const fromUnit = document.getElementById("fromUnit").value;
+            const toUnit = document.getElementById("toUnit").value;
+            const result = document.getElementById("result");
+            const conversionRate = document.getElementById("conversionRate");
+
+            if (valueInput.trim() === "" || isNaN(inputValue)) {
+                result.innerHTML = "<strong>Missing value.</strong> Add a number above to convert.";
+                conversionRate.innerText = "";
+                return;
+            }
+
             let convertedValue;
-            
+
             if (unitType === "temperature") {
-                if (fromUnit === "celsius" && toUnit === "fahrenheit") {
-                    convertedValue = (inputValue * 9/5) + 32;
-                } else if (fromUnit === "fahrenheit" && toUnit === "celsius") {
-                    convertedValue = (inputValue - 32) * 5/9;
-                } else if (fromUnit === "celsius" && toUnit === "kelvin") {
-                    convertedValue = inputValue + 273.15;
-                } else if (fromUnit === "kelvin" && toUnit === "celsius") {
-                    convertedValue = inputValue - 273.15;
-                } else if (fromUnit === "fahrenheit" && toUnit === "kelvin") {
-                    convertedValue = (inputValue - 32) * 5/9 + 273.15;
-                } else if (fromUnit === "kelvin" && toUnit === "fahrenheit") {
-                    convertedValue = (inputValue - 273.15) * 9/5 + 32;
-                } else {
-                    result.innerText = "Invalid temperature conversion.";
+                convertedValue = convertTemperature(inputValue, fromUnit, toUnit);
+                if (convertedValue === null) {
+                    result.innerHTML = "<strong>Unsupported conversion.</strong> Try a different combination.";
+                    conversionRate.innerText = "";
                     return;
                 }
+                conversionRate.innerText = "";
+            } else if (unitType === "timezone") {
+                convertedValue = convertTimeZone(inputValue, fromUnit, toUnit);
+                conversionRate.innerText = `Offset difference: GMT${formatOffset(units.timezone[fromUnit])} → GMT${formatOffset(units.timezone[toUnit])}`;
             } else {
-                let factorFrom = units[unitType][fromUnit];
-                let factorTo = units[unitType][toUnit];
+                const factorFrom = units[unitType][fromUnit];
+                const factorTo = units[unitType][toUnit];
                 convertedValue = (inputValue / factorFrom) * factorTo;
-                conversionRate.innerText = `1 ${fromUnit} = ${(factorTo / factorFrom).toFixed(4)} ${toUnit}`;
+                conversionRate.innerText = `Reference: 1 ${formatUnitLabel(fromUnit)} = ${(factorTo / factorFrom).toFixed(4)} ${formatUnitLabel(toUnit)}`;
             }
-            result.innerText = `${inputValue} ${fromUnit} = ${convertedValue.toFixed(4)} ${toUnit}`;
+
+            result.innerHTML = `<strong>${inputValue.toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong> ${formatUnitLabel(fromUnit)} equals <strong>${Number(convertedValue).toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong> ${formatUnitLabel(toUnit)}.`;
+        }
+
+        function convertTemperature(value, from, to) {
+            if (from === to) return value;
+            switch (`${from}-${to}`) {
+                case "celsius-fahrenheit":
+                    return (value * 9) / 5 + 32;
+                case "fahrenheit-celsius":
+                    return ((value - 32) * 5) / 9;
+                case "celsius-kelvin":
+                    return value + 273.15;
+                case "kelvin-celsius":
+                    return value - 273.15;
+                case "fahrenheit-kelvin":
+                    return ((value - 32) * 5) / 9 + 273.15;
+                case "kelvin-fahrenheit":
+                    return ((value - 273.15) * 9) / 5 + 32;
+                default:
+                    return null;
+            }
+        }
+
+        function convertTimeZone(value, from, to) {
+            const fromOffset = units.timezone[from];
+            const toOffset = units.timezone[to];
+            return value + (toOffset - fromOffset);
+        }
+
+        function formatOffset(offset) {
+            const sign = offset >= 0 ? "+" : "";
+            return `${sign}${offset}`;
         }
 
         function calculateDaysSince() {
-            let dateInput = document.getElementById("dateInput").value;
-            let result = document.getElementById("daysResult");
-            let fullResult = document.getElementById("fullResult");
+            const dateInput = document.getElementById("dateInput").value;
+            const result = document.getElementById("daysResult");
+            const fullResult = document.getElementById("fullResult");
+
             if (!dateInput) {
-                result.innerText = "Please select a date.";
+                result.innerHTML = "<strong>Choose a date.</strong> We\'ll calculate the time since then.";
+                fullResult.innerText = "";
                 return;
             }
-            let inputDate = new Date(dateInput);
-            let today = new Date();
-            let timeDifference = today - inputDate;
-            let daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-            let monthsDifference = (today.getFullYear() - inputDate.getFullYear()) * 12 + (today.getMonth() - inputDate.getMonth());
-            let yearsDifference = Math.floor(monthsDifference / 12);
-            let remainingMonths = monthsDifference % 12;
-            result.innerText = `Days since ${dateInput}: ${daysDifference}`;
-            fullResult.innerText = `Total: ${monthsDifference} months, ${yearsDifference} years and ${remainingMonths} months`;
+
+            const inputDate = new Date(dateInput);
+            const today = new Date();
+            const timeDifference = today - inputDate;
+            const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            const monthsDifference = (today.getFullYear() - inputDate.getFullYear()) * 12 + (today.getMonth() - inputDate.getMonth());
+            const yearsDifference = Math.floor(monthsDifference / 12);
+            const remainingMonths = monthsDifference % 12;
+
+            result.innerHTML = `<strong>${daysDifference}</strong> days since <strong>${inputDate.toLocaleDateString()}</strong>.`;
+            fullResult.innerText = `Total time: ${monthsDifference} months (${yearsDifference} years and ${remainingMonths} months).`;
         }
 
         populateUnits();
