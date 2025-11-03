@@ -10,7 +10,7 @@ pipeline {
   environment {
     // ---- Kendine göre düzenle ----
     S3_BUCKET                   = 'convert.ogulcanaydogan.com'
-    AWS_CREDENTIALS_ID          = 'aws-jenkins'
+    AWS_CREDENTIALS_ID          = 'skip'      // Jenkins credentials ID; leave 'skip' to use existing AWS CLI creds
     AWS_DEFAULT_REGION          = 'us-east-1'
     CREATE_CLOUDFRONT_INVALIDATION = 'true'   // istemezsen 'false'
     CLOUDFRONT_DISTRIBUTION_ID  = 'skip'      // CF yoksa 'skip' bırak
@@ -60,25 +60,38 @@ pipeline {
 
     stage('Deploy to S3') {
       steps {
-        withCredentials([aws(credentialsId: env.AWS_CREDENTIALS_ID,
-                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-          sh '''
-            set -euo pipefail
-            aws sts get-caller-identity
+        script {
+          def credentialsId = env.AWS_CREDENTIALS_ID?.trim()
+          def useManagedCredentials = credentialsId && credentialsId != 'skip'
+          def deployToS3 = {
+            sh '''
+              set -euo pipefail
+              aws sts get-caller-identity
 
-            # HTML dışı içerikler: cache'li
-            aws s3 sync build/site/ s3://$S3_BUCKET/ \
-              --delete \
-              --exclude "*.html" --exclude ".DS_Store" --exclude ".git/*"
+              # HTML dışı içerikler: cache'li
+              aws s3 sync build/site/ s3://$S3_BUCKET/ \
+                --delete \
+                --exclude "*.html" --exclude ".DS_Store" --exclude ".git/*"
 
-            # HTML dosyaları: no-cache + doğru content-type
-            aws s3 cp build/site/ s3://$S3_BUCKET/ \
-              --recursive --exclude "*" --include "*.html" \
-              --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
-              --content-type "text/html" \
-              --metadata-directive REPLACE
-          '''
+              # HTML dosyaları: no-cache + doğru content-type
+              aws s3 cp build/site/ s3://$S3_BUCKET/ \
+                --recursive --exclude "*" --include "*.html" \
+                --cache-control "no-cache, no-store, must-revalidate, max-age=0" \
+                --content-type "text/html" \
+                --metadata-directive REPLACE
+            '''
+          }
+
+          if (useManagedCredentials) {
+            withCredentials([aws(credentialsId: credentialsId,
+                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+              deployToS3()
+            }
+          } else {
+            echo 'AWS_CREDENTIALS_ID not provided; using existing AWS CLI credentials'
+            deployToS3()
+          }
         }
       }
     }
@@ -92,15 +105,28 @@ pipeline {
         }
       }
       steps {
-        withCredentials([aws(credentialsId: env.AWS_CREDENTIALS_ID,
-                             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-          sh '''
-            set -euo pipefail
-            aws cloudfront create-invalidation \
-              --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-              --paths "/*"
-          '''
+        script {
+          def credentialsId = env.AWS_CREDENTIALS_ID?.trim()
+          def useManagedCredentials = credentialsId && credentialsId != 'skip'
+          def invalidateCloudFront = {
+            sh '''
+              set -euo pipefail
+              aws cloudfront create-invalidation \
+                --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+                --paths "/*"
+            '''
+          }
+
+          if (useManagedCredentials) {
+            withCredentials([aws(credentialsId: credentialsId,
+                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+              invalidateCloudFront()
+            }
+          } else {
+            echo 'AWS_CREDENTIALS_ID not provided; using existing AWS CLI credentials'
+            invalidateCloudFront()
+          }
         }
       }
     }
